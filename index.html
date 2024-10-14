@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            color: #333;
+            background-color: #f0f0f0; /* Light theme background */
+            transition: background-color 0.3s, color 0.3s;
+            padding: 0 20px; /* Added horizontal padding */
+        }
+
+        .dark-theme {
+            background-color: #1c1c1c; /* Dark theme background */
+            color: #f0f0f0; /* Dark theme text color */
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 2.5rem;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            font-weight: bold;
+        }
+
+        #board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 10px;
+            margin-bottom: 20px;
+            perspective: 1000px; /* Perspective for 3D effect */
+        }
+
+        .cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100px;
+            height: 100px;
+            font-size: 3rem;
+            background-color: #fff;
+            border: 3px solid #007bff;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .cell:hover {
+            background-color: #e7f1ff;
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .winner {
+            background-color: #84c8ff !important;
+            animation: winner-animation 0.5s ease-in-out;
+        }
+
+        @keyframes winner-animation {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .reset, .theme-toggle {
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .reset {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .reset:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+        .theme-toggle {
+            background-color: #333;
+            color: white;
+        }
+
+        .theme-toggle:hover {
+            background-color: #555;
+            transform: scale(1.05);
+        }
+
+        .message {
+            margin-top: 20px;
+            font-size: 1.5rem;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            max-width: 300px;
+        }
+
+        .dark-theme .message {
+            background-color: rgba(28, 28, 28, 0.9);
+            color: #fff;
+        }
+
+        .dark-theme .cell {
+            background-color: #444;
+            border-color: #fff;
+        }
+
+        .dark-theme .cell:hover {
+            background-color: #555;
+        }
+
+        .dark-theme .reset {
+            background-color: #007bff;
+        }
+
+        .dark-theme .theme-toggle {
+            background-color: #444;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 600px) {
+            #board {
+                grid-template-columns: repeat(3, 80px);
+                grid-template-rows: repeat(3, 80px);
+            }
+
+            .cell {
+                width: 80px;
+                height: 80px;
+                font-size: 2.5rem; /* Adjust font size */
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .reset, .theme-toggle {
+                font-size: 1rem;
+                padding: 8px 16px;
+            }
+
+            .message {
+                font-size: 1.2rem;
+            }
+        }
+
+        @media (max-width: 400px) {
+            #board {
+                grid-template-columns: repeat(3, 60px);
+                grid-template-rows: repeat(3, 60px);
+            }
+
+            .cell {
+                width: 60px;
+                height: 60px;
+                font-size: 2rem; /* Adjust font size */
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .reset, .theme-toggle {
+                font-size: 0.9rem;
+                padding: 6px 12px;
+            }
+
+            .message {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Tic Tac Toe</h1>
+    <button class="theme-toggle" id="themeToggle">Switch to Dark Theme</button>
+    <div id="board"></div>
+    <button class="reset" id="resetButton">Reset Game</button>
+    <div class="message" id="message"></div>
+
+    <script>
+        const board = document.getElementById('board');
+        const resetButton = document.getElementById('resetButton');
+        const message = document.getElementById('message');
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+
+        let currentPlayer = 'X';
+        let gameBoard = ['', '', '', '', '', '', '', '', ''];
+        let isGameActive = true;
+
+        function createBoard() {
+            gameBoard.forEach((cell, index) => {
+                const cellElement = document.createElement('div');
+                cellElement.classList.add('cell');
+                cellElement.setAttribute('data-index', index);
+                cellElement.innerText = cell;
+                cellElement.addEventListener('click', handleCellClick);
+                board.appendChild(cellElement);
+            });
+        }
+
+        function handleCellClick(event) {
+            const index = event.target.getAttribute('data-index');
+            if (gameBoard[index] !== '' || !isGameActive) return;
+
+            gameBoard[index] = currentPlayer;
+            event.target.innerText = currentPlayer;
+            event.target.style.transition = "all 0.2s ease-in-out";
+            event.target.style.transform = "scale(1.1)";
+            setTimeout(() => { event.target.style.transform = "scale(1)"; }, 200);
+
+            checkResult();
+        }
+
+        function checkResult() {
+            const winningConditions = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+                [0, 4, 8], [2, 4, 6]             // diagonals
+            ];
+
+            let roundWon = false;
+
+            for (let condition of winningConditions) {
+                const [a, b, c] = condition;
+                if (gameBoard[a] === '' || gameBoard[b] === '' || gameBoard[c] === '') {
+                    continue;
+                }
+                if (gameBoard[a] === gameBoard[b] && gameBoard[a] === gameBoard[c]) {
+                    roundWon = true;
+                    highlightWinner(condition);
+                    break;
+                }
+            }
+
+            if (roundWon) {
+                message.innerText = `Player ${currentPlayer} wins!`;
+                isGameActive = false;
+                message.style.opacity = "1"; 
+                return;
+            }
+
+            if (!gameBoard.includes('')) {
+                message.innerText = "It's a draw!";
+                isGameActive = false;
+                message.style.opacity = "1"; 
+            }
+
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        }
+
+        function highlightWinner(condition) {
+            const cells = document.querySelectorAll('.cell');
+            condition.forEach(index => {
+                cells[index].classList.add('winner');
+            });
+        }
+
+        resetButton.addEventListener('click', resetGame);
+
+        function resetGame() {
+            gameBoard = ['', '', '', '', '', '', '', '', ''];
+            isGameActive = true;
+            currentPlayer = 'X';
+            message.style.opacity = "0"; 
+            message.innerText = '';
+
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.innerText = '';
+                cell.classList.remove('winner');
+            });
+        }
+
+        themeToggle.addEventListener('click', toggleTheme);
+
+        function toggleTheme() {
+            body.classList.toggle('dark-theme');
+            if (body.classList.contains('dark-theme')) {
+                themeToggle.innerText = 'Switch to Light Theme';
+            } else {
+                themeToggle.innerText = 'Switch to Dark Theme';
+            }
+        }
+
+        createBoard();
+    </script>
+</body>
+</html>
